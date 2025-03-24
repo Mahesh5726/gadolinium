@@ -2,12 +2,12 @@ import { createHash } from "crypto";
 //import type { User } from "@prisma/client";
 import { SignUpWithUsernameAndPasswordError, type SignUpWithUsernameAndPasswordResult } from "./+type";
 import { prisma } from "../../extras/prisma";
-import { sign, type JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { jwtSecretKey } from "../../environment";
 
 
 
-const signUpWithUsernameAndPassword = async (parameters: {
+export const signUpWithUsernameAndPassword = async (parameters: {
     username: string;
     password: string;
 }): Promise<SignUpWithUsernameAndPasswordResult> => {
@@ -31,13 +31,13 @@ const signUpWithUsernameAndPassword = async (parameters: {
         });
 
         //Generate Token
-        const jwtPayload: JwtPayload = {
+        const jwtPayload: jwt.JwtPayload = {
             iss: "http://purpleshorts.co.in",
             sub: user.id,
             username: user.username,
         }
 
-        const token = sign(jwtPayload, jwtSecretKey, {
+        const token = jwt.sign(jwtPayload, jwtSecretKey, {
             expiresIn: "30d",
         });
 
