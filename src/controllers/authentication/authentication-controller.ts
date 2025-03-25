@@ -7,7 +7,7 @@ import {
 } from "./authentication-type";
 import { prisma } from "../../extras/prisma";
 import jwt from "jsonwebtoken";
-import { jwtSecretKey } from "../../environment";
+import { jwtSecretKey } from "../../../environment";
 
 export const createPasswordHash = (parameters: {
   password: string;
