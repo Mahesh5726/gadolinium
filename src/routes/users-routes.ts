@@ -1,27 +1,11 @@
 import { Hono } from "hono";
-import { jwtSecretKey } from "../../environment";
-import jwt from "jsonwebtoken";
 import { prisma } from "../extras/prisma";
+import { tokenMiddleware } from "./middlewares/token-middleware";
 
 export const usersRoutes = new Hono();
 
 usersRoutes.get(
-  "/",
-  async (context, next) => {
-    const token = context.req.header("token");
-
-    if (!token) {
-      return context.json({ error: "Unauthorized" }, 401);
-    }
-
-    try {
-      const verified = jwt.verify(token, jwtSecretKey);
-    } catch (error) {
-      return context.json({ error: "Unauthorized" }, 401);
-    }
-    await next();
-  },
-  async (context) => {
+  "/", tokenMiddleware, async (context) => {
     try {
       const users = await prisma.user.findMany();
       return context.json(
