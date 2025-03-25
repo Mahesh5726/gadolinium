@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { signUpWithUsernameAndPassword } from "../controllers/authentication";
-import { SignUpWithUsernameAndPasswordError } from '../controllers/authentication/+type';
+import { logInWithUsernameAndPassword, signUpWithUsernameAndPassword } from "../controllers/authentication";
+import { LogInWithUsernameAndPasswordError, SignUpWithUsernameAndPasswordError } from '../controllers/authentication/+type';
 
 export const hono = new Hono();
 
@@ -25,12 +25,24 @@ hono.post("/authentication/sign-up", async (c) => {
 });
 
 
+hono.post("/authentication/log-in", async (c) => {
+  try {
+    const { username, password } = await c.req.json();
 
-hono.get("/health", (c) => {
-  return c.json(
-    {
-      message: "All Ok",
-    },
-    200
-  );
+    const result = await logInWithUsernameAndPassword({
+      username,
+      password,
+    });
+
+    return c.json({
+      data: result,
+    }, 200);
+    
+  } catch (error) {
+    if (error === LogInWithUsernameAndPasswordError.INCORRECT_USERNAME_OR_PASSWORD) {
+      return c.json({ error: "Incorrect username or password" }, 401);
+    }
+    
+    return c.json({ error: "Unknown error" }, 500);
+  }
 });

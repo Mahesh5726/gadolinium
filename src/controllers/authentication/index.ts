@@ -1,11 +1,34 @@
 import { createHash } from "crypto";
 //import type { User } from "@prisma/client";
-import { SignUpWithUsernameAndPasswordError, type SignUpWithUsernameAndPasswordResult } from "./+type";
+import { LogInWithUsernameAndPasswordError, SignUpWithUsernameAndPasswordError, type LogInWithUsernameAndPasswordResult, type SignUpWithUsernameAndPasswordResult } from "./+type";
 import { prisma } from "../../extras/prisma";
 import jwt from "jsonwebtoken";
 import { jwtSecretKey } from "../../environment";
 
+export const createPasswordHash = (parameters: {
+    password: string;
+}): string => {
+    return createHash("sha256").update(parameters.password).digest("hex");
+};
 
+
+const createJWToken = (parameters: {
+  id: string;
+  username: string;
+}): string => {
+  // Generate token
+  const jwtPayload: jwt.JwtPayload = {
+    iss: "https://purpleshorts.co.in",
+    sub: parameters.id,
+    username: parameters.username,
+  };
+
+  const token = jwt.sign(jwtPayload, jwtSecretKey, {
+    expiresIn: "30d",
+  });
+
+  return token;
+};
 
 export const signUpWithUsernameAndPassword = async (parameters: {
     username: string;
@@ -22,7 +45,10 @@ export const signUpWithUsernameAndPassword = async (parameters: {
             throw SignUpWithUsernameAndPasswordError.CONFLICTING_USERNAME;
         }
 
-        const hashedPassword = createHash("sha256").update(parameters.password).digest("hex"); //function chaining
+        const hashedPassword = createPasswordHash({
+            password: parameters.password,
+        });
+
         const user = await prisma.user.create({
             data: {
                 username: parameters.username,
@@ -51,4 +77,43 @@ export const signUpWithUsernameAndPassword = async (parameters: {
         console.error(e);
         throw SignUpWithUsernameAndPasswordError.UNKNOWN;
     }
+};
+
+export const logInWithUsernameAndPassword = async (parameters: {
+    username: string;
+    password: string;
+}): Promise<LogInWithUsernameAndPasswordResult> => {
+    try {
+        const passwordHash = createPasswordHash({
+            password: parameters.password,
+        });
+
+        const user = await prisma.user.findUnique({
+            where: {
+                username: parameters.username,
+                password: passwordHash,
+            }   
+        })
+
+        if (!user) {
+            throw LogInWithUsernameAndPasswordError.INCORRECT_USERNAME_OR_PASSWORD;
+        }
+
+        const token = createJWToken({
+            id: user.id,
+            username: user.username,
+        });
+
+        const result: LogInWithUsernameAndPasswordResult = {
+            token,
+            user,
+        };
+
+        return result;
+        
+    } catch (e) {
+        console.log("Error: ", e);
+        throw LogInWithUsernameAndPasswordError.UNKNOWN;
+    }
 }
+    
