@@ -6,7 +6,7 @@ import { LogInWithUsernameAndPasswordError, SignUpWithUsernameAndPasswordError }
 export const authenticationRoutes = new Hono();
 
 
-authenticationRoutes.post("/authentication/sign-up", async (c) => {
+authenticationRoutes.post("/sign-up", async (c) => {
   const { username, password } = await c.req.json();
   try {
     const result = await signUpWithUsernameAndPassword({
@@ -26,7 +26,7 @@ authenticationRoutes.post("/authentication/sign-up", async (c) => {
   }
 });
 
-authenticationRoutes.post("/authentication/log-in", async (c) => {
+authenticationRoutes.post("/log-in", async (c) => {
   try {
     const { username, password } = await c.req.json();
 
